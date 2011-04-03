@@ -1,4 +1,4 @@
 /*.exe
 /*.o
 /.dep
-/localbuildconf.inc
+/config.mk
