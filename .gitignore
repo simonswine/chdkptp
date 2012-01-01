@@ -2,3 +2,5 @@
 /*.o
 /.dep
 /config.mk
+lfs/*.o
+lfs/.dep
