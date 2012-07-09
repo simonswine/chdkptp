@@ -1,2 +1,2 @@
 * text=auto !eol
-lua/msgtest.lua -text
+lua/extras/msgtest.lua -text
