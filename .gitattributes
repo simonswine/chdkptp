@@ -1,2 +1,4 @@
 * text=auto !eol
+/README-RASPI-LIBS.TXT -text
+/README-RASPI.TXT -text
 lua/extras/msgtest.lua -text
