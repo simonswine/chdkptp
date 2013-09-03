@@ -1,2 +1,3 @@
 * text=auto !eol
 lua/extras/msgtest.lua -text
+lua/gui_icon.lua -text
