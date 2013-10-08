@@ -4,3 +4,5 @@
 /config.mk
 lfs/*.o
 lfs/.dep
+*~
+.svn
