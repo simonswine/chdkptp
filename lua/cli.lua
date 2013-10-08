@@ -594,6 +594,110 @@ cli:add_commands{
 		end,
 	},
 	{
+		names={'timelapse','tl'},
+		help='timelapse and store pictures local',
+		arghelp='<local>',
+		help_detail=[[
+ Start a timelapse, store images in a local directory
+]],
+		func=function(self,args) 
+  
+            local interval = 120
+            local upload_after_interval_count = 15
+            local dest_dir = "/home/zeitraffer/zeitraffer_roh/"
+            local dest_dir_temp = dest_dir.."temp/"
+            local filename_template = "zeitraffer_%08d.jpg"
+            local complete_count = tma.get_last_number(dest_dir,filename_template)
+
+            -- Upload Loop  
+            while true do
+                local count = 1 
+
+                -- Go into picture loop
+                while count <= upload_after_interval_count do
+
+                    -- Check if connected
+                    if not con:is_connected() then
+                        cli.infomsg('Not connected -> connecting\n')
+                        cli:execute("connect")
+                    end
+
+                    -- Check if in record mode
+                    local status,rstatus,rerr = con:execwait([[
+                    if not get_mode() then
+	                    switch_mode_usb(1)
+	                    return true
+                    end
+                    return false
+                    ]])
+
+                    -- Wait for 2 sec if mode switched
+                    if rstatus then
+                        sys.sleep(2000)
+                        -- Disable Flashlight
+                        cli.infomsg('Disable Flashlight\n')
+                        local status,rstatus,rerr = con:execwait([[
+                        -- Set flash mode
+                        props=require("propcase")
+                        set_prop(props.FLASH_MODE, 2)     -- flash off
+                        set_prop(props.IS_MODE, 3)        -- IS_MODE off
+                        set_prop(props.AF_ASSIST_BEAM,0)  -- AF assist off if supported for this camera
+                        ]])
+
+                        -- Lock AF after mode switch
+                        cli.infomsg('Lock AutoFocus\n')
+                        local status,rstatus,rerr = con:execwait([[
+                        -- Set autofocus
+                        set_aflock(1)
+                        ]])
+                        sys.sleep(500)
+                    end
+
+                    
+                    cli.infomsg('Picture #'..complete_count+count..': \n')
+                    local status, err = cli:execute('shoot')
+            
+                    if status then
+                        -- Get t/v values
+                        local status,tv = con:execwait([[
+                        return get_tv96()              
+                        ]])
+
+                        cli.infomsg('   done tv='..tv..'\n')
+
+                        -- Increment
+                        count = count + 1
+
+                        -- Wait for interval
+                        if count <= upload_after_interval_count then
+                            sys.sleep(interval*1000) 
+                        end
+                    else
+                        cli.infomsg("Shooting failed\n")
+                        local status,rstatus,rerr = con:execwait([[
+                        return get_shooting()                    
+                        ]])
+                    end
+                end
+                -- Load pictures from camera
+                os.execute("mkdir -p "..dest_dir_temp)
+                local status, err = cli:execute('mdownload DCIM/100CANON '..dest_dir_temp)
+                local status, err = cli:execute('delete DCIM/100CANON')
+
+                -- Get number of last picture
+                complete_count = tma.get_last_number(dest_dir,filename_template)
+                tma.move_temp(dest_dir,dest_dir_temp,complete_count+1)
+                complete_count = tma.get_last_number(dest_dir,filename_template)
+
+                -- TODO: Upload
+                
+
+            end
+
+			return true
+		end,
+	},
+	{
 		names={'rmem'},
 		help='read memory',
 		args=argparser.create{i32=false}, -- word

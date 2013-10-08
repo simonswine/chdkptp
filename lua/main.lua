@@ -24,6 +24,7 @@ cli=require('cli')
 exp=require('exposure')
 dng=require('dng')
 dngcli=require'dngcli'
+tma=require('tma')
 
 --[[
 Command line arguments
